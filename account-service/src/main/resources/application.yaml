@@ -1,3 +1,11 @@
 spring:
   application:
     name: account-service
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+server:
+  port: ${SERVER_PORT:8083}
