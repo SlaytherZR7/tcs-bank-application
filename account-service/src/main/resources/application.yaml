@@ -8,4 +8,4 @@ spring:
   flyway:
     enabled: true
 server:
-  port: ${SERVER_PORT:8083}
+  port: ${ACCOUNT_SERVER_PORT:8083}
