@@ -29,6 +29,7 @@ public class RabbitClientEventPublisher {
                     ClientMessagingConfiguration.EXCHANGE_NAME,
                     ClientMessagingConfiguration.ROUTING_KEY,
                     payload);
+            LOGGER.info("Published {} event {} for client {}", event.eventType(), event.eventId(), event.clientId());
         } catch (RuntimeException exception) {
             LOGGER.error(
                     "Failed to publish client lifecycle event {} for client {}",

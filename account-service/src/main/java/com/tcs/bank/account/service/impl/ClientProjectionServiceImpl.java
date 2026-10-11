@@ -5,11 +5,15 @@ import com.tcs.bank.account.model.entity.ClientProjection;
 import com.tcs.bank.account.model.enumeration.ClientStatus;
 import com.tcs.bank.account.repository.ClientProjectionRepository;
 import com.tcs.bank.account.service.ClientProjectionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ClientProjectionServiceImpl implements ClientProjectionService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClientProjectionServiceImpl.class);
 
     private static final int SUPPORTED_SCHEMA_VERSION = 1;
 
@@ -31,10 +35,12 @@ public class ClientProjectionServiceImpl implements ClientProjectionService {
                 .orElseGet(ClientProjection::new);
 
         if (event.eventId().equals(projection.getLastEventId())) {
+            logger.info("Ignoring duplicate client event {}", event.eventId());
             return;
         }
         if (projection.getLastEventAt() != null
                 && event.occurredAt().isBefore(projection.getLastEventAt())) {
+            logger.info("Ignoring outdated client event {} for client {}", event.eventId(), event.clientId());
             return;
         }
 
@@ -44,5 +50,7 @@ public class ClientProjectionServiceImpl implements ClientProjectionService {
         projection.setLastEventId(event.eventId());
         projection.setLastEventAt(event.occurredAt());
         clientProjectionRepository.save(projection);
+        logger.info("Applied {} event {} to client {} projection (status {})",
+                event.eventType(), event.eventId(), event.clientId(), event.clientStatus());
     }
 }

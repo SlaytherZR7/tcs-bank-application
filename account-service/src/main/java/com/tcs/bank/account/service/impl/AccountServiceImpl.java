@@ -17,6 +17,8 @@ import com.tcs.bank.account.repository.AccountRepository;
 import com.tcs.bank.account.repository.ClientProjectionRepository;
 import com.tcs.bank.account.service.AccountService;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class AccountServiceImpl implements AccountService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AccountServiceImpl.class);
 
     private final AccountRepository accountRepository;
     private final ClientProjectionRepository clientProjectionRepository;
@@ -58,7 +62,10 @@ public class AccountServiceImpl implements AccountService {
         ensureAccountNumberAvailable(account.getAccountNumber(), null);
         account.setClient(getActiveClient(request.clientId()));
         account.setCurrentBalance(account.getInitialBalance());
-        return accountMapper.toResponse(accountRepository.save(account));
+        Account savedAccount = accountRepository.save(account);
+        logger.info("Account {} opened for client {} with initial balance {}",
+                savedAccount.getAccountNumber(), request.clientId(), savedAccount.getInitialBalance());
+        return accountMapper.toResponse(savedAccount);
     }
 
     @Override
@@ -67,6 +74,7 @@ public class AccountServiceImpl implements AccountService {
         Account account = getAccount(accountId);
         accountMapper.replace(account, request);
         ensureAccountNumberAvailable(account.getAccountNumber(), accountId);
+        logger.info("Account {} replaced", accountId);
         return accountMapper.toResponse(accountRepository.save(account));
     }
 
@@ -78,6 +86,7 @@ public class AccountServiceImpl implements AccountService {
         if (request.accountNumber() != null) {
             ensureAccountNumberAvailable(account.getAccountNumber(), accountId);
         }
+        logger.info("Account {} partially updated", accountId);
         return accountMapper.toResponse(accountRepository.save(account));
     }
 
@@ -88,6 +97,7 @@ public class AccountServiceImpl implements AccountService {
         if (account.getStatus() != AccountStatus.DELETED) {
             account.markDeleted();
             accountRepository.save(account);
+            logger.info("Account {} marked as deleted", accountId);
         }
     }
 
@@ -100,6 +110,7 @@ public class AccountServiceImpl implements AccountService {
         ClientProjection client = clientProjectionRepository.findById(clientId)
                 .orElseThrow(() -> new ClientProjectionNotFoundException(clientId));
         if (client.getStatus() != ClientStatus.ACTIVE) {
+            logger.warn("Rejected account opening: client {} is not active", clientId);
             throw new ClientNotActiveException(clientId);
         }
         return client;

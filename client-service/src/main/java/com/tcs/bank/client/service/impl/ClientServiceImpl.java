@@ -14,6 +14,8 @@ import com.tcs.bank.client.service.ClientService;
 import java.util.List;
 import java.time.Instant;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class ClientServiceImpl implements ClientService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClientServiceImpl.class);
 
     private final ClientRepository clientRepository;
     private final ClientMapper clientMapper;
@@ -103,6 +107,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     private void publishClientEvent(Client client, String eventType) {
+        logger.info("Client {} stored with status {}; queuing {} event", client.getId(), client.getStatus(), eventType);
         eventPublisher.publishEvent(new ClientLifecycleEvent(
                 UUID.randomUUID().toString(),
                 ClientLifecycleEvent.CURRENT_SCHEMA_VERSION,
@@ -124,6 +129,7 @@ public class ClientServiceImpl implements ClientService {
                 ? clientRepository.existsByIdentification(identification)
                 : clientRepository.existsByIdentificationAndIdNot(identification, currentClientId);
         if (identificationAlreadyUsed) {
+            logger.warn("Rejected client change: identification already registered");
             throw new DuplicateIdentificationException();
         }
     }

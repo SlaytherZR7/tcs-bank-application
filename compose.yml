@@ -36,13 +36,15 @@ services:
       start_period: 5s
 
   rabbitmq:
-    image: rabbitmq:4-alpine
+    image: rabbitmq:4-management-alpine
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-bank_app}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
     ports:
       - "${RABBITMQ_PORT:-5672}:5672"
+      # Management UI to inspect queues and move messages out of the dead letter queue
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:

@@ -66,7 +66,7 @@ class AccountControllerTest {
         result.andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/cuentas/2"))
                 .andExpect(jsonPath("$.numeroCuenta").value("500001"))
-                .andExpect(jsonPath("$.tipoCuenta").value("Ahorro"))
+                .andExpect(jsonPath("$.tipoCuenta").value("Ahorros"))
                 .andExpect(jsonPath("$.saldoDisponible").value(125.50));
     }
 
@@ -100,7 +100,7 @@ class AccountControllerTest {
         // Assert
         result.andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value(containsString("saldoInicial")));
+                .andExpect(jsonPath("$.message").value("saldoInicial: debe ser mayor o igual que 0.00"));
     }
 
     @Test

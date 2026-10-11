@@ -1,6 +1,5 @@
 package com.tcs.bank.client.controller;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -103,6 +102,6 @@ class ClientControllerTest {
         result
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.message").value(containsString("edad")));
+                .andExpect(jsonPath("$.message").value("edad: debe ser mayor que 0"));
     }
 }

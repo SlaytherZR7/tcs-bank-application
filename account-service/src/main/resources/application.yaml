@@ -7,6 +7,16 @@ spring:
       ddl-auto: validate
   flyway:
     enabled: true
+  rabbitmq:
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1s
+          multiplier: 2
+          max-interval: 5s
 management:
   endpoints:
     web:

@@ -18,6 +18,6 @@ public class TestcontainersConfiguration {
     @Bean
     @ServiceConnection
     RabbitMQContainer rabbitContainer() {
-        return new RabbitMQContainer("rabbitmq:4-alpine");
+        return new RabbitMQContainer("rabbitmq:4-management-alpine");
     }
 }
