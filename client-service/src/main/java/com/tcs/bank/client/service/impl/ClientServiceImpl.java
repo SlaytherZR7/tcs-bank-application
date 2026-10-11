@@ -2,6 +2,7 @@ package com.tcs.bank.client.service.impl;
 
 import com.tcs.bank.client.exceptions.ClientNotFoundException;
 import com.tcs.bank.client.exceptions.DuplicateIdentificationException;
+import com.tcs.bank.client.messaging.ClientLifecycleEvent;
 import com.tcs.bank.client.mappers.ClientMapper;
 import com.tcs.bank.client.model.dto.ClientRequest;
 import com.tcs.bank.client.model.dto.ClientResponse;
@@ -11,6 +12,9 @@ import com.tcs.bank.client.model.enumeration.ClientStatus;
 import com.tcs.bank.client.repository.ClientRepository;
 import com.tcs.bank.client.service.ClientService;
 import java.util.List;
+import java.time.Instant;
+import java.util.UUID;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,14 +26,17 @@ public class ClientServiceImpl implements ClientService {
     private final ClientRepository clientRepository;
     private final ClientMapper clientMapper;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ClientServiceImpl(
             ClientRepository clientRepository,
             ClientMapper clientMapper,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            ApplicationEventPublisher eventPublisher) {
         this.clientRepository = clientRepository;
         this.clientMapper = clientMapper;
         this.passwordEncoder = passwordEncoder;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
@@ -51,7 +58,9 @@ public class ClientServiceImpl implements ClientService {
         Client client = clientMapper.toEntity(request);
         ensureIdentificationAvailable(client.getIdentification(), null);
         client.setPasswordHash(passwordEncoder.encode(request.password()));
-        return clientMapper.toResponse(clientRepository.save(client));
+        Client savedClient = clientRepository.save(client);
+        publishClientEvent(savedClient, ClientLifecycleEvent.CLIENT_CREATED);
+        return clientMapper.toResponse(savedClient);
     }
 
     @Override
@@ -61,7 +70,9 @@ public class ClientServiceImpl implements ClientService {
         clientMapper.replace(client, request);
         ensureIdentificationAvailable(client.getIdentification(), clientId);
         client.setPasswordHash(passwordEncoder.encode(request.password()));
-        return clientMapper.toResponse(clientRepository.save(client));
+        Client savedClient = clientRepository.save(client);
+        publishClientEvent(savedClient, ClientLifecycleEvent.CLIENT_UPDATED);
+        return clientMapper.toResponse(savedClient);
     }
 
     @Override
@@ -75,7 +86,9 @@ public class ClientServiceImpl implements ClientService {
         if (request.password() != null) {
             client.setPasswordHash(passwordEncoder.encode(request.password()));
         }
-        return clientMapper.toResponse(clientRepository.save(client));
+        Client savedClient = clientRepository.save(client);
+        publishClientEvent(savedClient, ClientLifecycleEvent.CLIENT_UPDATED);
+        return clientMapper.toResponse(savedClient);
     }
 
     @Override
@@ -84,8 +97,20 @@ public class ClientServiceImpl implements ClientService {
         Client client = getClient(clientId);
         if (client.getStatus() != ClientStatus.DELETED) {
             client.markDeleted();
-            clientRepository.save(client);
+            Client savedClient = clientRepository.save(client);
+            publishClientEvent(savedClient, ClientLifecycleEvent.CLIENT_DEACTIVATED);
         }
+    }
+
+    private void publishClientEvent(Client client, String eventType) {
+        eventPublisher.publishEvent(new ClientLifecycleEvent(
+                UUID.randomUUID().toString(),
+                ClientLifecycleEvent.CURRENT_SCHEMA_VERSION,
+                eventType,
+                client.getId(),
+                client.getName(),
+                client.getStatus().name(),
+                Instant.now()));
     }
 
     private Client getClient(Long clientId) {

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.tcs.bank.client.mappers.ClientMapper;
+import com.tcs.bank.client.messaging.ClientLifecycleEvent;
 import com.tcs.bank.client.model.dto.ClientRequest;
 import com.tcs.bank.client.model.dto.ClientResponse;
 import com.tcs.bank.client.model.entity.Client;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,12 +34,15 @@ class ClientServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
+
     private ClientServiceImpl clientService;
 
     @BeforeEach
     void setUp() {
         clientService = new ClientServiceImpl(
-                clientRepository, Mappers.getMapper(ClientMapper.class), passwordEncoder);
+                clientRepository, Mappers.getMapper(ClientMapper.class), passwordEncoder, eventPublisher);
     }
 
     @Test
@@ -62,6 +67,7 @@ class ClientServiceTest {
         // Assert
         ArgumentCaptor<Client> captor = ArgumentCaptor.forClass(Client.class);
         verify(clientRepository).save(captor.capture());
+        verify(eventPublisher).publishEvent(any(ClientLifecycleEvent.class));
         assertEquals("$2a$encoded-hash", captor.getValue().getPasswordHash());
         assertEquals("ID-100", captor.getValue().getIdentification());
         assertEquals(ClientStatus.ACTIVE, captor.getValue().getStatus());
