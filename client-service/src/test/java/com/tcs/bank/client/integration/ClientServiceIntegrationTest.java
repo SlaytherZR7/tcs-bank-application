@@ -75,8 +75,9 @@ class ClientServiceIntegrationTest {
         @BeforeEach
         void bindEventsQueue() {
                 // Not auto-delete: each receive() opens and cancels a consumer, which would
-                // drop an auto-delete queue
-                eventsQueue = new Queue("client-events-it-" + UUID.randomUUID(), false, false, false);
+                // drop an auto-delete queue. Durable because RabbitMQ 4 rejects transient
+                // non-exclusive queues; @AfterEach removes it.
+                eventsQueue = new Queue("client-events-it-" + UUID.randomUUID(), true, false, false);
                 amqpAdmin.declareQueue(eventsQueue);
                 Binding binding = BindingBuilder.bind(eventsQueue)
                                 .to(new TopicExchange(ClientMessagingConfiguration.EXCHANGE_NAME))
