@@ -73,7 +73,7 @@ public class MovementServiceImpl implements MovementService {
 
         // 3. Reject zero-amount movements
         if (amount.compareTo(BigDecimal.ZERO) == 0) {
-            throw new IllegalArgumentException("no puede ser cero");
+            throw new IllegalArgumentException("valor: no puede ser cero");
         }
 
         // 4. Validate sufficient funds for withdrawals
@@ -117,7 +117,7 @@ public class MovementServiceImpl implements MovementService {
 
         // Reject zero-amount corrections
         if (newAmount.compareTo(BigDecimal.ZERO) == 0) {
-            throw new IllegalArgumentException("no puede ser cero");
+            throw new IllegalArgumentException("valor: no puede ser cero");
         }
 
         // Validate balances before any persistence:

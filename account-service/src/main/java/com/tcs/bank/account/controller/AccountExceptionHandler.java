@@ -17,8 +17,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class AccountExceptionHandler {
@@ -74,7 +76,26 @@ public class AccountExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
             IllegalArgumentException exception, HttpServletRequest request) {
-        return error(HttpStatus.BAD_REQUEST, "valor: " + exception.getMessage(), request);
+        String message = exception.getMessage() != null ? exception.getMessage() : "Argumento inválido";
+        return error(HttpStatus.BAD_REQUEST, message, request);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiErrorResponse> handleMissingParameter(
+            MissingServletRequestParameterException exception, HttpServletRequest request) {
+        return error(
+                HttpStatus.BAD_REQUEST,
+                exception.getParameterName() + ": es obligatorio",
+                request);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
+            MethodArgumentTypeMismatchException exception, HttpServletRequest request) {
+        return error(
+                HttpStatus.BAD_REQUEST,
+                exception.getName() + ": valor inválido '" + exception.getValue() + "'",
+                request);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
@@ -100,7 +121,10 @@ public class AccountExceptionHandler {
     }
 
     private String formatFieldError(FieldError error) {
-        return jsonFieldName(error.getField()) + ": " + error.getDefaultMessage();
+        String message = error.isBindingFailure()
+                ? "valor inválido '" + error.getRejectedValue() + "'"
+                : error.getDefaultMessage();
+        return jsonFieldName(error.getField()) + ": " + message;
     }
 
     private String jsonFieldName(String fieldName) {
@@ -111,6 +135,8 @@ public class AccountExceptionHandler {
             case "initialBalance" -> "saldoInicial";
             case "status" -> "estado";
             case "valor" -> "valor";
+            case "startDate", "dateRangeValid" -> "fechaInicio";
+            case "endDate" -> "fechaFin";
             default -> fieldName;
         };
     }
