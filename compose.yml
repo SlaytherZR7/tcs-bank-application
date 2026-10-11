@@ -52,6 +52,61 @@ services:
       retries: 10
       start_period: 10s
 
+  account-service:
+    build: ./account-service
+    image: bank/account-service:latest
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://account-db:5432/${ACCOUNT_DB_NAME:-accountdb}
+      SPRING_DATASOURCE_USERNAME: ${ACCOUNT_DB_USER:-bank_account}
+      SPRING_DATASOURCE_PASSWORD: ${ACCOUNT_DB_PASSWORD:?Set ACCOUNT_DB_PASSWORD in .env}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-bank_app}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
+      BANK_TIME_ZONE: ${BANK_TIME_ZONE:-America/Guayaquil}
+    ports:
+      - "${ACCOUNT_SERVER_PORT:-8083}:8083"
+    depends_on:
+      account-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  client-service:
+    build: ./client-service
+    image: bank/client-service:latest
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://client-db:5432/${CLIENT_DB_NAME:-clientdb}
+      SPRING_DATASOURCE_USERNAME: ${CLIENT_DB_USER:-bank_client}
+      SPRING_DATASOURCE_PASSWORD: ${CLIENT_DB_PASSWORD:?Set CLIENT_DB_PASSWORD in .env}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER:-bank_app}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS:?Set RABBITMQ_DEFAULT_PASS in .env}
+    ports:
+      - "${CLIENT_SERVER_PORT:-8082}:8082"
+    depends_on:
+      client-db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      account-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
 volumes:
   client_db_data:
   account_db_data:
