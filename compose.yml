@@ -17,6 +17,24 @@ services:
       retries: 10
       start_period: 5s
 
+  account-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${ACCOUNT_DB_NAME:-accountdb}
+      POSTGRES_USER: ${ACCOUNT_DB_USER:-bank_account}
+      POSTGRES_PASSWORD: ${ACCOUNT_DB_PASSWORD:?Set ACCOUNT_DB_PASSWORD in .env}
+    ports:
+      - "${ACCOUNT_DB_PORT:-5433}:5432"
+    volumes:
+      - account_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
   rabbitmq:
     image: rabbitmq:4-alpine
     restart: unless-stopped
@@ -36,4 +54,5 @@ services:
 
 volumes:
   client_db_data:
+  account_db_data:
   rabbitmq_data:
