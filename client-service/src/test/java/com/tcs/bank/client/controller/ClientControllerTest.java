@@ -49,7 +49,7 @@ class ClientControllerTest {
 
     @Test
     @DisplayName("POST clientes creates the resource and omits the password from the response")
-    void create_shouldReturnCreatedClientWithoutPassword() throws Exception {
+    void create_shouldReturnCreatedClientWithoutPassword_whenPayloadIsValid() throws Exception {
         // Arrange
         when(clientService.create(any(ClientRequest.class)))
                 .thenReturn(
@@ -73,7 +73,7 @@ class ClientControllerTest {
 
     @Test
     @DisplayName("POST clientes returns conflict when the identification already exists")
-    void create_shouldReturnConflictWhenIdentificationExists() throws Exception {
+    void create_shouldReturnConflict_whenIdentificationExists() throws Exception {
         // Arrange
         when(clientService.create(any(ClientRequest.class)))
                 .thenThrow(new DuplicateIdentificationException());
@@ -91,7 +91,7 @@ class ClientControllerTest {
 
     @Test
     @DisplayName("POST clientes returns a validation error for invalid input")
-    void create_shouldReturnBadRequestWhenPayloadIsInvalid() throws Exception {
+    void create_shouldReturnBadRequest_whenPayloadIsInvalid() throws Exception {
         // Arrange
         String invalidRequest = REQUEST_JSON.replace("\"edad\": 32", "\"edad\": 0");
 

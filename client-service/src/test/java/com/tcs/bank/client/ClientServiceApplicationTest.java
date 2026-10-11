@@ -1,4 +1,4 @@
-package com.tcs.bank.account;
+package com.tcs.bank.client;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -6,7 +6,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
 @ActiveProfiles("test")
-class AccountServiceApplicationTests {
+class ClientServiceApplicationTest {
 
 	@Test
 	void contextLoads() {

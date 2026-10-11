@@ -47,7 +47,7 @@ class ClientServiceTest {
 
     @Test
     @DisplayName("create stores an encoded password and does not expose it in the response")
-    void create_shouldEncodePasswordBeforeSaving() {
+    void create_shouldEncodePasswordBeforeSaving_whenClientIsNew() {
         // Arrange
         ClientRequest request = new ClientRequest(
                 "Ana Pérez", Gender.FEMALE, 32, " ID-100 ", "Quito", "0990000000", "1234", true);

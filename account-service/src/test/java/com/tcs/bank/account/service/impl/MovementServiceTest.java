@@ -181,7 +181,7 @@ class MovementServiceTest {
 
         @Test
         @DisplayName("replace registers a reversal and replacement without modifying historical movements")
-        void replace_shouldReverseAndCreateNewMovement_deterministically() {
+        void replace_shouldAppendReversalAndReplacement_whenMovementWasNotCorrected() {
                 Account account = activeAccount("478758", new BigDecimal("1425.00"));
                 account.setId(1L);
 
@@ -294,7 +294,7 @@ class MovementServiceTest {
 
         @Test
         @DisplayName("compensate registers a compensatory movement linked to original")
-        void compensate_shouldCreateCompensatoryMovement() {
+        void compensate_shouldAppendCompensatoryMovement_whenMovementWasNotCompensated() {
                 Account account = activeAccount("496825", BigDecimal.ZERO);
                 account.setId(2L);
 
@@ -355,7 +355,7 @@ class MovementServiceTest {
 
         @Test
         @DisplayName("compensate succeeds even if account is INACTIVE or DELETED")
-        void compensate_shouldSucceed_evenIfAccountInactive() {
+        void compensate_shouldSucceed_whenAccountIsInactive() {
                 Account account = activeAccount("496825", BigDecimal.ZERO);
                 account.setStatus(AccountStatus.INACTIVE);
 
@@ -376,7 +376,7 @@ class MovementServiceTest {
 
         @Test
         @DisplayName("append-only ledger invariant holds with subsequent movements intact")
-        void ledgerInvariantsHold_withSubsequentMovements() {
+        void compensate_shouldKeepLaterMovementsIntact_whenEarlierMovementIsCompensated() {
                 // Scenario:
                 // m1: Deposit +100 -> rb = 100
                 // m2: Deposit +50 -> rb = 150 (subsequent to m1)

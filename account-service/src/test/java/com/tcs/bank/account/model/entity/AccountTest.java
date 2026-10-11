@@ -10,7 +10,7 @@ class AccountTest {
 
     @Test
     @DisplayName("markDeleted moves an active account to deleted")
-    void markDeleted_shouldSetDeletedStatus() {
+    void markDeleted_shouldSetDeletedStatus_whenAccountIsActive() {
         // Arrange
         Account account = new Account();
         assertEquals(AccountStatus.ACTIVE, account.getStatus());

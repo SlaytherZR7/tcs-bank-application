@@ -45,7 +45,7 @@ class AccountControllerTest {
 
     @Test
     @DisplayName("POST cuentas creates the account and returns Spanish JSON properties")
-    void create_shouldReturnCreatedAccount() throws Exception {
+    void create_shouldReturnCreatedAccount_whenPayloadIsValid() throws Exception {
         // Arrange
         when(accountService.create(any(CreateAccountRequest.class))).thenReturn(
                 new AccountResponse(
@@ -72,7 +72,7 @@ class AccountControllerTest {
 
     @Test
     @DisplayName("POST cuentas returns conflict for a duplicate account number")
-    void create_shouldReturnConflictForDuplicateAccountNumber() throws Exception {
+    void create_shouldReturnConflict_whenAccountNumberExists() throws Exception {
         // Arrange
         when(accountService.create(any(CreateAccountRequest.class)))
                 .thenThrow(new DuplicateAccountNumberException());
@@ -89,7 +89,7 @@ class AccountControllerTest {
 
     @Test
     @DisplayName("POST cuentas rejects a negative opening balance")
-    void create_shouldRejectNegativeInitialBalance() throws Exception {
+    void create_shouldReturnBadRequest_whenInitialBalanceIsNegative() throws Exception {
         // Arrange
         String invalidRequest = REQUEST_JSON.replace("125.50", "-1.00");
 
@@ -105,7 +105,7 @@ class AccountControllerTest {
 
     @Test
     @DisplayName("POST cuentas rejects letters in the account number")
-    void create_shouldRejectAlphanumericAccountNumber() throws Exception {
+    void create_shouldReturnBadRequest_whenAccountNumberIsAlphanumeric() throws Exception {
         // Arrange
         String invalidRequest = REQUEST_JSON.replace("500001", "50A001");
 

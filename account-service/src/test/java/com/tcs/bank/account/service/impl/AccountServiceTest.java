@@ -45,7 +45,7 @@ class AccountServiceTest {
 
     @Test
     @DisplayName("create initializes current balance and associates an active projected client")
-    void create_shouldInitializeBalanceAndAssociateClient() {
+    void create_shouldInitializeBalanceAndAssociateClient_whenClientIsActive() {
         // Arrange
         CreateAccountRequest request = new CreateAccountRequest(
                 "  500001  ", 15L, AccountType.SAVINGS, new BigDecimal("125.50"), true);

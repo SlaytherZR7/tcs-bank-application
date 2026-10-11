@@ -41,6 +41,8 @@ class MovementControllerTest {
 
         private static final String MOVEMENTS_URL = "/api/movimientos";
 
+        private static final LocalDateTime MOVEMENT_DATE = LocalDateTime.of(2022, 2, 10, 10, 0);
+
         private static final String DEPOSIT_JSON = """
                         {
                           "numeroCuenta": "225487",
@@ -78,7 +80,7 @@ class MovementControllerTest {
         @DisplayName("GET /api/movimientos returns 200 with movement list")
         void findAll_shouldReturn200() throws Exception {
                 MovementResponse res1 = new MovementResponse(
-                                1L, LocalDateTime.now(), MovementType.INCOME, new BigDecimal("600.00"),
+                                1L, MOVEMENT_DATE, MovementType.INCOME, new BigDecimal("600.00"),
                                 new BigDecimal("700.00"), "225487");
                 when(movementService.findAll(null)).thenReturn(List.of(res1));
 
@@ -93,7 +95,7 @@ class MovementControllerTest {
         @DisplayName("GET /api/movimientos/{id} returns 200 when movement exists")
         void findById_shouldReturn200() throws Exception {
                 MovementResponse res = new MovementResponse(
-                                1L, LocalDateTime.now(), MovementType.INCOME, new BigDecimal("600.00"),
+                                1L, MOVEMENT_DATE, MovementType.INCOME, new BigDecimal("600.00"),
                                 new BigDecimal("700.00"), "225487");
                 when(movementService.findById(1L)).thenReturn(res);
 
@@ -174,7 +176,7 @@ class MovementControllerTest {
         @DisplayName("PUT /api/movimientos/{id} returns 200 with replacement movement")
         void replace_shouldReturn200() throws Exception {
                 MovementResponse res = new MovementResponse(
-                                3L, LocalDateTime.now(), MovementType.EXPENSE, new BigDecimal("-300.00"),
+                                3L, MOVEMENT_DATE, MovementType.EXPENSE, new BigDecimal("-300.00"),
                                 new BigDecimal("1700.00"), "478758");
                 when(movementService.replace(eq(10L), any(UpdateMovementRequest.class))).thenReturn(res);
 
@@ -206,7 +208,7 @@ class MovementControllerTest {
         @DisplayName("PATCH /api/movimientos/{id} delegates to replace and returns 200")
         void patch_shouldReturn200() throws Exception {
                 MovementResponse res = new MovementResponse(
-                                3L, LocalDateTime.now(), MovementType.EXPENSE, new BigDecimal("-300.00"),
+                                3L, MOVEMENT_DATE, MovementType.EXPENSE, new BigDecimal("-300.00"),
                                 new BigDecimal("1700.00"), "478758");
                 when(movementService.replace(eq(10L), any(UpdateMovementRequest.class))).thenReturn(res);
 

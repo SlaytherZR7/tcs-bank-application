@@ -20,7 +20,7 @@ class AccountMapperTest {
 
     @Test
     @DisplayName("maps creation data and converts the public status to the internal enum")
-    void toEntity_shouldMapCreationRequest() {
+    void toEntity_shouldMapAllFields_whenCreationRequestIsValid() {
         // Arrange
         CreateAccountRequest request = new CreateAccountRequest(
                 "  500001  ", 15L, AccountType.SAVINGS, new BigDecimal("125.50"), true);
@@ -37,7 +37,7 @@ class AccountMapperTest {
 
     @Test
     @DisplayName("patch preserves client and balances when those fields are not provided")
-    void patch_shouldPreserveImmutableAndOmittedFields() {
+    void patch_shouldPreserveImmutableAndOmittedFields_whenPatchIsPartial() {
         // Arrange
         Account account = new Account();
         account.setAccountNumber("500001");

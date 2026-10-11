@@ -20,7 +20,7 @@ class ClientMapperTest {
     @ParameterizedTest
     @CsvSource({ "true, ACTIVE", "false, INACTIVE" })
     @DisplayName("maps the public boolean status to its internal lifecycle enum")
-    void toClientStatus_shouldMapBooleanToLifecycleStatus(
+    void toClientStatus_shouldMapToLifecycleStatus_whenEstadoIsBoolean(
             boolean active, ClientStatus expectedStatus) {
         // Arrange
 
@@ -33,7 +33,7 @@ class ClientMapperTest {
 
     @Test
     @DisplayName("maps a deleted client to false in the legacy boolean response")
-    void toResponse_shouldMapDeletedStatusToFalse() {
+    void toResponse_shouldMapEstadoToFalse_whenClientIsDeleted() {
         // Arrange
         Client client = new Client();
         client.setStatus(ClientStatus.DELETED);
@@ -47,7 +47,7 @@ class ClientMapperTest {
 
     @Test
     @DisplayName("patch maps only provided fields and preserves omitted values")
-    void patch_shouldLeaveOmittedFieldsUnchanged() {
+    void patch_shouldLeaveFieldsUnchanged_whenTheyAreOmitted() {
         // Arrange
         Client client = new Client();
         client.setName("Original name");

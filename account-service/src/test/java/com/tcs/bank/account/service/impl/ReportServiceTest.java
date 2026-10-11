@@ -58,7 +58,7 @@ class ReportServiceTest {
 
     @Test
     @DisplayName("generateAccountStatement produces report matching technical test example for Marianela Montalvo")
-    void generateAccountStatement_shouldProduceReport_forMarianelaCase() {
+    void generateAccountStatement_shouldListEachMovement_whenAccountsHaveMovementsInRange() {
         Long clientId = 2L;
         LocalDate startDate = LocalDate.of(2022, 2, 1);
         LocalDate endDate = LocalDate.of(2022, 2, 28);
@@ -68,7 +68,7 @@ class ReportServiceTest {
         client.setName("Marianela Montalvo");
         client.setStatus(ClientStatus.ACTIVE);
         client.setLastEventId("evt-1");
-        client.setLastEventAt(Instant.now());
+        client.setLastEventAt(Instant.parse("2022-01-01T00:00:00Z"));
 
         Account checkingAccount = new Account();
         checkingAccount.setId(10L);

@@ -35,7 +35,7 @@ class ClientProjectionServiceTest {
 
     @Test
     @DisplayName("apply stores a client snapshot received from an event")
-    void apply_shouldCreateProjectionFromEvent() {
+    void apply_shouldCreateProjection_whenClientIsUnknown() {
         // Arrange
         ClientLifecycleEvent event = event("event-1", "ClientCreated", "ACTIVE", Instant.parse("2026-05-01T10:00:00Z"));
         when(clientProjectionRepository.findById(15L)).thenReturn(Optional.empty());
@@ -55,7 +55,7 @@ class ClientProjectionServiceTest {
 
     @Test
     @DisplayName("apply ignores duplicate event delivery")
-    void apply_shouldIgnoreDuplicateEvent() {
+    void apply_shouldIgnoreEvent_whenEventWasAlreadyProcessed() {
         // Arrange
         ClientLifecycleEvent event = event("event-1", "ClientCreated", "ACTIVE", Instant.parse("2026-05-01T10:00:00Z"));
         ClientProjection projection = new ClientProjection();

@@ -49,7 +49,7 @@ class MovementRepositoryTest {
 
     @Test
     @DisplayName("findClientMovementsBetween returns only the client's movements in the inclusive range, grouped by account")
-    void findClientMovementsBetween_shouldReturnClientMovementsInRange_orderedByAccountAndDate() {
+    void findClientMovementsBetween_shouldReturnClientMovementsOrderedByAccount_whenTheyFallInRange() {
         Movement savingsWithdrawal = movement(savings, "-540.00", "0.00", LocalDateTime.of(2022, 2, 8, 15, 30));
         Movement checkingDeposit = movement(checking, "600.00", "700.00", LocalDateTime.of(2022, 2, 10, 10, 0));
         Movement checkingOnLastDay = movement(checking, "-50.00", "650.00", TO);
@@ -64,7 +64,7 @@ class MovementRepositoryTest {
 
     @Test
     @DisplayName("findLastMovementsUpTo returns the latest movement per account up to the cut-off, breaking date ties by ID")
-    void findLastMovementsUpTo_shouldReturnLatestMovementPerAccount_ignoringLaterOnes() {
+    void findLastMovementsUpTo_shouldReturnLatestMovementPerAccount_whenLaterMovementsExist() {
         LocalDateTime sameInstant = LocalDateTime.of(2022, 1, 20, 12, 0);
         movement(checking, "200.00", "300.00", LocalDateTime.of(2022, 1, 5, 9, 0));
         movement(checking, "-200.00", "100.00", sameInstant);
