@@ -1,9 +1,13 @@
 package com.tcs.bank.account.controller;
 
+import com.tcs.bank.account.exceptions.AccountNotActiveException;
 import com.tcs.bank.account.exceptions.AccountNotFoundException;
 import com.tcs.bank.account.exceptions.ClientNotActiveException;
 import com.tcs.bank.account.exceptions.ClientProjectionNotFoundException;
 import com.tcs.bank.account.exceptions.DuplicateAccountNumberException;
+import com.tcs.bank.account.exceptions.InsufficientFundsException;
+import com.tcs.bank.account.exceptions.MovementAlreadyCorrectedException;
+import com.tcs.bank.account.exceptions.MovementNotFoundException;
 import com.tcs.bank.account.model.dto.ApiErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.stream.Collectors;
@@ -43,6 +47,36 @@ public class AccountExceptionHandler {
         return error(HttpStatus.CONFLICT, exception.getMessage(), request);
     }
 
+    @ExceptionHandler(MovementNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleMovementNotFound(
+            MovementNotFoundException exception, HttpServletRequest request) {
+        return error(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(InsufficientFundsException.class)
+    public ResponseEntity<ApiErrorResponse> handleInsufficientFunds(
+            InsufficientFundsException exception, HttpServletRequest request) {
+        return error(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(AccountNotActiveException.class)
+    public ResponseEntity<ApiErrorResponse> handleAccountNotActive(
+            AccountNotActiveException exception, HttpServletRequest request) {
+        return error(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(MovementAlreadyCorrectedException.class)
+    public ResponseEntity<ApiErrorResponse> handleMovementAlreadyCorrected(
+            MovementAlreadyCorrectedException exception, HttpServletRequest request) {
+        return error(HttpStatus.CONFLICT, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
+            IllegalArgumentException exception, HttpServletRequest request) {
+        return error(HttpStatus.BAD_REQUEST, "valor: " + exception.getMessage(), request);
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiErrorResponse> handlePersistenceConflict(HttpServletRequest request) {
         return error(
@@ -76,6 +110,7 @@ public class AccountExceptionHandler {
             case "accountType" -> "tipoCuenta";
             case "initialBalance" -> "saldoInicial";
             case "status" -> "estado";
+            case "valor" -> "valor";
             default -> fieldName;
         };
     }
