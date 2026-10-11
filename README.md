@@ -2,9 +2,9 @@
 
 Solución bancaria con dos microservicios Spring Boot que se comunican de forma asíncrona mediante RabbitMQ:
 
-| Servicio | Responsabilidad | Puerto | Base de datos |
-|---|---|---|---|
-| `client-service` | Persona y Cliente | `8082` | PostgreSQL `clientdb` |
+| Servicio          | Responsabilidad               | Puerto | Base de datos          |
+| ----------------- | ----------------------------- | ------ | ---------------------- |
+| `client-service`  | Persona y Cliente             | `8082` | PostgreSQL `clientdb`  |
 | `account-service` | Cuenta, Movimiento y Reportes | `8083` | PostgreSQL `accountdb` |
 
 ```
@@ -43,12 +43,12 @@ cp .env.example .env
 
 Edita `.env` y reemplaza las contraseñas de ejemplo (`replace-me-*`). El archivo `.env` está en `.gitignore` y nunca debe subirse al repositorio.
 
-| Variable | Uso | Valor por defecto |
-|---|---|---|
-| `CLIENT_SERVER_PORT` / `ACCOUNT_SERVER_PORT` | Puertos publicados de los servicios | `8082` / `8083` |
-| `CLIENT_DB_*` / `ACCOUNT_DB_*` | Nombre, usuario, contraseña y puerto de cada base | ver `.env.example` |
-| `RABBITMQ_DEFAULT_USER` / `RABBITMQ_DEFAULT_PASS` | Credenciales del broker | `bank_app` / — |
-| `BANK_TIME_ZONE` | Zona horaria con la que se fechan los movimientos | `America/Guayaquil` |
+| Variable                                          | Uso                                               | Valor por defecto   |
+| ------------------------------------------------- | ------------------------------------------------- | ------------------- |
+| `CLIENT_SERVER_PORT` / `ACCOUNT_SERVER_PORT`      | Puertos publicados de los servicios               | `8082` / `8083`     |
+| `CLIENT_DB_*` / `ACCOUNT_DB_*`                    | Nombre, usuario, contraseña y puerto de cada base | ver `.env.example`  |
+| `RABBITMQ_DEFAULT_USER` / `RABBITMQ_DEFAULT_PASS` | Credenciales del broker                           | `bank_app` / —      |
+| `BANK_TIME_ZONE`                                  | Zona horaria con la que se fechan los movimientos | `America/Guayaquil` |
 
 ### 2. Construir y arrancar
 
@@ -143,12 +143,23 @@ El perfil `local` se conecta a `localhost` usando los puertos y credenciales de 
 
 ## Pruebas
 
+| Comando (en cada servicio)  | Qué ejecuta                                                                                                                                      | Requiere Docker |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- |
+| `./gradlew test`            | Pruebas unitarias de dominio y servicios (JUnit 5 + Mockito), de endpoints (`@WebMvcTest` + MockMvc) y de repositorios (`@DataJpaTest` sobre H2) | No              |
+| `./gradlew integrationTest` | Pruebas de integración (`@Tag("integration")`) con PostgreSQL y RabbitMQ reales levantados por Testcontainers                                    | Sí              |
+| `./gradlew build`           | Ambas                                                                                                                                            | Sí              |
+
 ```bash
-cd client-service && ./gradlew test
-cd account-service && ./gradlew test
+cd client-service && ./gradlew test integrationTest
+cd account-service && ./gradlew test integrationTest
 ```
 
-Las pruebas usan H2 en memoria y no necesitan Docker, PostgreSQL ni RabbitMQ. Incluyen pruebas unitarias de dominio y de servicios (JUnit 5 + Mockito), pruebas de endpoints (`@WebMvcTest` + MockMvc) y pruebas de repositorios (`@DataJpaTest`).
+Las pruebas de integración arrancan cada servicio con su configuración real (Flyway, listener de RabbitMQ) usando las mismas imágenes que `compose.yml`:
+
+- **`client-service`**: flujo HTTP → servicio → repositorio → PostgreSQL. Comprueba la contraseña guardada con BCrypt, la publicación de `ClientCreated`/`ClientDeactivated` sin contraseña, y que un duplicado no publica eventos.
+- **`account-service`**: el evento del cliente llega por RabbitMQ y habilita cuentas, movimientos y el reporte. Comprueba `Saldo no disponible` sin cambios parciales, retiros concurrentes sin sobregiro (bloqueo pesimista), la baja del cliente y el envío de eventos inválidos a la DLQ.
+
+Cada lado de la mensajería se prueba contra un broker real con el contrato JSON compartido. El recorrido completo entre los dos servicios se verifica con el despliegue de Docker Compose.
 
 ---
 
@@ -156,12 +167,12 @@ Las pruebas usan H2 en memoria y no necesitan Docker, PostgreSQL ni RabbitMQ. In
 
 Todas las rutas usan el prefijo `/api` y JSON con nombres en español. Las fechas de consulta usan el formato ISO `YYYY-MM-DD`.
 
-| Recurso | Métodos | Servicio |
-|---|---|---|
-| `/api/clientes`, `/api/clientes/{id}` | `GET`, `POST`, `PUT`, `PATCH`, `DELETE` | `client-service` (8082) |
-| `/api/cuentas`, `/api/cuentas/{id}`, `/api/cuentas?clienteId={id}` | `GET`, `POST`, `PUT`, `PATCH`, `DELETE` | `account-service` (8083) |
+| Recurso                                                                          | Métodos                                 | Servicio                 |
+| -------------------------------------------------------------------------------- | --------------------------------------- | ------------------------ |
+| `/api/clientes`, `/api/clientes/{id}`                                            | `GET`, `POST`, `PUT`, `PATCH`, `DELETE` | `client-service` (8082)  |
+| `/api/cuentas`, `/api/cuentas/{id}`, `/api/cuentas?clienteId={id}`               | `GET`, `POST`, `PUT`, `PATCH`, `DELETE` | `account-service` (8083) |
 | `/api/movimientos`, `/api/movimientos/{id}`, `/api/movimientos?numeroCuenta={n}` | `GET`, `POST`, `PUT`, `PATCH`, `DELETE` | `account-service` (8083) |
-| `/api/reportes?clienteId={id}&fechaInicio={fecha}&fechaFin={fecha}` | `GET` | `account-service` (8083) |
+| `/api/reportes?clienteId={id}&fechaInicio={fecha}&fechaFin={fecha}`              | `GET`                                   | `account-service` (8083) |
 
 - `DELETE` de clientes y cuentas es una baja lógica: el registro y su historial se conservan.
 - Los errores devuelven siempre la misma estructura:
@@ -176,14 +187,14 @@ Todas las rutas usan el prefijo `/api` y JSON con nombres en español. Las fecha
 }
 ```
 
-| Código | Cuándo |
-|---|---|
-| `201` | Recurso creado (incluye la cabecera `Location`) |
-| `200` | Consulta o actualización correcta |
-| `204` | Baja o anulación correcta |
-| `400` | Validación o JSON inválido |
-| `404` | Recurso inexistente |
-| `409` | Duplicado, saldo insuficiente o recurso inactivo |
+| Código | Cuándo                                           |
+| ------ | ------------------------------------------------ |
+| `201`  | Recurso creado (incluye la cabecera `Location`)  |
+| `200`  | Consulta o actualización correcta                |
+| `204`  | Baja o anulación correcta                        |
+| `400`  | Validación o JSON inválido                       |
+| `404`  | Recurso inexistente                              |
+| `409`  | Duplicado, saldo insuficiente o recurso inactivo |
 
 ### Reporte de estado de cuenta
 
@@ -196,10 +207,10 @@ Devuelve una fila por movimiento del rango, con el formato del enunciado:
     "Cliente": "Marianela Montalvo",
     "Numero Cuenta": "225487",
     "Tipo": "Corriente",
-    "Saldo Inicial": 100.00,
+    "Saldo Inicial": 100.0,
     "Estado": true,
-    "Movimiento": 600.00,
-    "Saldo Disponible": 700.00
+    "Movimiento": 600.0,
+    "Saldo Disponible": 700.0
   }
 ]
 ```
