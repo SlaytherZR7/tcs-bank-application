@@ -17,6 +17,7 @@ import com.tcs.bank.account.repository.AccountRepository;
 import com.tcs.bank.account.repository.MovementRepository;
 import com.tcs.bank.account.service.MovementService;
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.slf4j.Logger;
@@ -33,14 +34,17 @@ public class MovementServiceImpl implements MovementService {
     private final MovementRepository movementRepository;
     private final AccountRepository accountRepository;
     private final MovementMapper movementMapper;
+    private final Clock clock;
 
     public MovementServiceImpl(
             MovementRepository movementRepository,
             AccountRepository accountRepository,
-            MovementMapper movementMapper) {
+            MovementMapper movementMapper,
+            Clock clock) {
         this.movementRepository = movementRepository;
         this.accountRepository = accountRepository;
         this.movementMapper = movementMapper;
+        this.clock = clock;
     }
 
     @Override
@@ -85,7 +89,7 @@ public class MovementServiceImpl implements MovementService {
         }
 
         // 5. Build and persist the movement
-        Movement movement = buildMovement(account, amount, newBalance, LocalDateTime.now(), null);
+        Movement movement = buildMovement(account, amount, newBalance, LocalDateTime.now(clock), null);
         movementRepository.save(movement);
 
         // 6. Update the account balance
@@ -121,7 +125,8 @@ public class MovementServiceImpl implements MovementService {
         }
 
         // Validate balances before any persistence:
-        // 1. Reversing the original movement must not produce a negative balance (e.g. deposited funds already spent)
+        // 1. Reversing the original movement must not produce a negative balance (e.g.
+        // deposited funds already spent)
         BigDecimal balanceAfterRevert = account.getCurrentBalance().subtract(originalAmount);
         if (balanceAfterRevert.compareTo(BigDecimal.ZERO) < 0) {
             logger.warn("Cannot revert movement {} on account {}: currentBalance={}, originalAmount={}",
@@ -132,12 +137,13 @@ public class MovementServiceImpl implements MovementService {
         // 2. Applying the new amount must not leave the account negative
         BigDecimal finalBalance = balanceAfterRevert.add(newAmount);
         if (finalBalance.compareTo(BigDecimal.ZERO) < 0) {
-            logger.warn("Insufficient funds after replacing movement {} on account {}: balanceAfterRevert={}, newAmount={}",
+            logger.warn(
+                    "Insufficient funds after replacing movement {} on account {}: balanceAfterRevert={}, newAmount={}",
                     movementId, account.getAccountNumber(), balanceAfterRevert, newAmount);
             throw new InsufficientFundsException();
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(clock);
 
         // Append reversal movement linked to original
         BigDecimal reversalAmount = originalAmount.negate();
@@ -163,9 +169,11 @@ public class MovementServiceImpl implements MovementService {
     public void compensate(Long movementId) {
         Movement original = getMovement(movementId);
 
-        // Idempotent: if already compensated or corrected, return silently without creating another movement
+        // Idempotent: if already compensated or corrected, return silently without
+        // creating another movement
         if (movementRepository.existsByCorrectionOf_Id(movementId)) {
-            logger.info("Movement {} already corrected/compensated. Skipping duplicate compensatory movement.", movementId);
+            logger.info("Movement {} already corrected/compensated. Skipping duplicate compensatory movement.",
+                    movementId);
             return;
         }
 
@@ -184,7 +192,8 @@ public class MovementServiceImpl implements MovementService {
             throw new InsufficientFundsException();
         }
 
-        Movement compensatory = buildMovement(account, compensatoryAmount, newBalance, LocalDateTime.now(), original);
+        Movement compensatory = buildMovement(account, compensatoryAmount, newBalance, LocalDateTime.now(clock),
+                original);
         movementRepository.save(compensatory);
 
         account.setCurrentBalance(newBalance);

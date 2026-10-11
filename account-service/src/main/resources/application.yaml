@@ -9,3 +9,5 @@ spring:
     enabled: true
 server:
   port: ${ACCOUNT_SERVER_PORT:8083}
+bank:
+  time-zone: ${BANK_TIME_ZONE:America/Guayaquil}
